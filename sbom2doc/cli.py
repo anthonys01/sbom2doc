@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import argparse
+import os
 import sys
 import textwrap
 from collections import ChainMap
@@ -50,6 +51,27 @@ def main(argv=None):
         help="add license text",
     )
 
+    output_group.add_argument(
+        "--ntia-summary",
+        action="store_true",
+        default=False,
+        help="add NTIA summary",
+    )
+
+    def file_path(path):
+        if path == "" or os.path.isfile(path):
+            return path
+        else:
+            raise argparse.ArgumentTypeError(f"No file was found at path {path}")
+
+    output_group.add_argument(
+        "--extra-text",
+        type=file_path,
+        action="store",
+        default="",
+        help="File path to extra text to add at the end of the output",
+    )
+
     # Add format option
     output_group.add_argument(
         "-f",
@@ -76,6 +98,8 @@ def main(argv=None):
         "debug": False,
         "format": "console",
         "include_license": False,
+        "ntia_summary": False,
+        "extra_text": ""
     }
 
     raw_args = parser.parse_args(argv[1:])
@@ -110,6 +134,8 @@ def main(argv=None):
             input_file,
             args["output_file"],
             args["include_license"],
+            args["ntia_summary"],
+            args["extra_text"]
         )
 
     except FileNotFoundError:

@@ -11,7 +11,7 @@ from sbom2doc.docbuilder.markdownbuilder import MarkdownBuilder
 from sbom2doc.docbuilder.pdfbuilder import PDFBuilder
 
 
-def generate_document(format, sbom_parser, filename, outfile, include_license):
+def generate_document(format, sbom_parser, filename, outfile, include_license, ntia_summary, extra_text):
     # Get constituent components of the SBOM
     packages = sbom_parser.get_packages()
     files = sbom_parser.get_files()
@@ -83,7 +83,7 @@ def generate_document(format, sbom_parser, filename, outfile, include_license):
             id = package.get("id", None)
             name = package.get("name", None)
             version = package.get("version", None)
-            supplier = package.get("supplier", None)
+            supplier = package.get("supplier", "NOT KNOWN")
             license = package.get("licenseconcluded", "NOT KNOWN")
             sbom_licenses.append(license)
             sbom_document.addrow([name, version, supplier, license])
@@ -132,25 +132,26 @@ def generate_document(format, sbom_parser, filename, outfile, include_license):
         sbom_document.addrow([key, str(value)])
     sbom_document.showtable(widths=[10, 4])
 
-    sbom_document.heading(1, "NTIA Summary")
-    sbom_document.createtable(["Element", "Status"])
-    sbom_document.addrow(["All file information provided?", str(files_valid)])
-    sbom_document.addrow(["All package information provided?", str(packages_valid)])
-    sbom_document.addrow(["Creator identified?", str(creator_identified)])
-    sbom_document.addrow(["Creation time identified?", str(creation_time)])
-    sbom_document.addrow(
-        ["Dependency relationships provided?", str(relationships_valid)]
-    )
-    sbom_document.showtable(widths=[10, 4])
+    if ntia_summary:
+        sbom_document.heading(1, "NTIA Summary")
+        sbom_document.createtable(["Element", "Status"])
+        sbom_document.addrow(["All file information provided?", str(files_valid)])
+        sbom_document.addrow(["All package information provided?", str(packages_valid)])
+        sbom_document.addrow(["Creator identified?", str(creator_identified)])
+        sbom_document.addrow(["Creation time identified?", str(creation_time)])
+        sbom_document.addrow(
+            ["Dependency relationships provided?", str(relationships_valid)]
+        )
+        sbom_document.showtable(widths=[10, 4])
 
-    valid_sbom = (
-        files_valid
-        and packages_valid
-        and creator_identified
-        and creation_time
-        and relationships_valid
-    )
-    sbom_document.paragraph(f"NTIA conformant {valid_sbom}")
+        valid_sbom = (
+            files_valid
+            and packages_valid
+            and creator_identified
+            and creation_time
+            and relationships_valid
+        )
+        sbom_document.paragraph(f"NTIA conformant {valid_sbom}")
 
     if include_license:
         sbom_document.pagebreak()
@@ -169,5 +170,12 @@ def generate_document(format, sbom_parser, filename, outfile, include_license):
             except requests.exceptions.RequestException:
                 sbom_document.heading(2, key, number=False)
                 sbom_document.paragraph("Unable to find license text.")
+
+    if extra_text:
+        with open(extra_text) as f:
+            text_to_add = f.read()
+        sbom_document.pagebreak()
+        sbom_document.heading(1, "Extra notice")
+        sbom_document.paragraph(text_to_add)
 
     sbom_document.publish(outfile)

@@ -1,3 +1,4 @@
+requests
 lib4sbom >= 0.3.1
 rich
 reportlab

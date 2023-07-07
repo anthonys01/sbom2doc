@@ -42,7 +42,10 @@ class PDFBuilder(DocBuilder):
 
     h1 = PS(name="Heading1", fontSize=16, fontName=document_font_bold, leading=18)
 
-    body = PS(name="body", fontSize=12, fontName=document_font, leading=18)
+    body = PS(name="body", fontSize=12, fontName=document_font, leading=12)
+
+    table_header_style = PS(name="header", fontSize=9, fontName=document_font_bold)
+    cell_style = PS(name="cell", fontSize=8, fontName=document_font, splitLongWords=True)
 
     black = colors.black
 
@@ -52,8 +55,8 @@ class PDFBuilder(DocBuilder):
         [
             ("INNERGRID", (0, 0), (-1, -1), 0.25, black),
             ("BOX", (0, 0), (-1, -1), 0.25, black),
-            ("FONT", (0, 0), (-1, -1), document_font, 12),
-            ("FONT", (0, 0), (-1, 0), document_font_bold),
+            # ("FONT", (0, 0), (-1, -1), document_font, 12),
+            # ("FONT", (0, 0), (-1, 0), document_font_bold, 12),
         ]
     )
 
@@ -148,10 +151,14 @@ class PDFBuilder(DocBuilder):
 
     def addrow(self, data):
         # Add row to table
-        self.table_data.append(self._validatedata(data))
+        if len(self.table_data) == 0:
+            self.table_data.append([Paragraph(cell, self.table_header_style) for cell in data])
+        else:
+            self.table_data.append([Paragraph(cell, self.cell_style) for cell in data])
 
     def showtable(self, widths=None):
-        colwidths = [w * cm for w in widths]
+        width = 16 * cm
+        colwidths = [width * 3 / 10, width * 1 / 10, width * 2 / 10, width * 2 / 10]
         self._spacer()
         tbl = Table(self.table_data, colWidths=colwidths, repeatRows=1)
         tbl.setStyle(self.table_style)
